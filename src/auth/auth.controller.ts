@@ -42,11 +42,12 @@ export class AuthController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@Request() req) {
+  async getProfile(@Request() req) {
     // req.user viene del JwtStrategy.validate()
+    const user = await this.authService.getProfile(req.user.userId);
     return {
       message: 'Perfil obtenido exitosamente',
-      user: req.user,
+      user: user,
     };
   }
 

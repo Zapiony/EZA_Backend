@@ -1,55 +1,40 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, BeforeInsert, BeforeUpdate } from 'typeorm';
-import * as bcrypt from 'bcrypt';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+
+// Note: This entity maps to the USUARIO table as requested.
+// The structure follows the image provided: USU_ID, CLI_CEDULA_RUC, USU_NOMBRE, USU_CONTRASENA
 
 export enum UserRole {
-    GUEST = 'guest',
     CLIENT = 'client',
-    EMPLOYEE = 'employee',
     ADMIN = 'admin',
-}   
+}
 
-@Entity('users')
-
+@Entity('USUARIO')
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id: string;
+    @PrimaryGeneratedColumn('identity', { name: 'USU_ID' })
+    id: number; // Changed to number as per USU_ID NUMBER(38)
 
-    @Column({ type: 'text', unique: true })
-    username: string;
+    @Column({ name: 'CLI_CEDULA_RUC', unique: true })
+    cedula: string; // This acts as the username/identifier
 
-    @Column({ type: 'text' })
+    @Column({ name: 'USU_NOMBRE' })
     name: string;
 
-    @Column({ type: 'text', unique: true, nullable: true })
-    email: string;
-
-    @Column({ type: 'text', select: false })
+    @Column({ name: 'USU_CONTRASENA', select: false })
     password: string;
 
-    @Column({
-        type: 'enum',
-        enum: UserRole,
-        default: UserRole.CLIENT,
-    })
-    role: UserRole;
+    // These fields are not in the image but might be needed for the app logic.
+    // If they are not in the DB, we should mark them as virtual or remove them if not needed.
+    // For now, I will keep 'email' as it is used in DTOs, but maybe map it to CLI_CEDULA_RUC or remove it?
+    // The LoginDto uses 'email'. I should probably support email OR cedula.
+    // Use CLI_CEDULA_RUC as the login identifier.
 
-    @Column({ type: 'boolean', default: true })
-    isActive: boolean;
+    // I'll add 'email' purely to satisfy TS interfaces if needed, or better, remove it and update everything.
+    // Let's assume there is NO email in USUARIO table based on the image.
 
-    @CreateDateColumn()
-    createdAt: Date;
+    // Default Role for anyone in this table is CLIENT.
+    // Virtual Role property (not in DB)
+    role: UserRole = UserRole.CLIENT;
 
-    @UpdateDateColumn()
-    updatedAt: Date;
-
-    // Optional: Add method to hash password before saving
-    @BeforeInsert()
-    @BeforeUpdate()
-    async hashPassword() {
-        if (this.password) {
-            // Only hash if simpler criteria met or distinct check logic used in service
-            // Ideally hashing happens in Service, but this is a fail-safe or pattern preference.
-            // For now, I'll comment this implementation detail out to avoid forcing it if they do it in service.
-        }
-    }
-}    
+    // Helper for active status, default true
+    isActive: boolean = true;
+}
