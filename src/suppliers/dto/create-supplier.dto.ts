@@ -6,8 +6,6 @@ export class CreateSupplierDto {
     @MaxLength(13)
     PRV_RUC: string;
 
-
-
     @IsString()
     @IsNotEmpty()
     @MaxLength(60)

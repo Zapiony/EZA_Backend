@@ -4,7 +4,8 @@ import {
   Get,
   Body,
   UseGuards,
-  Request
+  Request,
+  Param
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -43,7 +44,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    // req.user viene del JwtStrategy.validate()
     const user = await this.authService.getProfile(req.user.userId);
     return {
       message: 'Perfil obtenido exitosamente',

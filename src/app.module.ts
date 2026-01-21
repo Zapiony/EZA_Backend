@@ -22,6 +22,8 @@ import { PurchaseOrder } from './purchase-orders/entities/purchase-order.entity'
 import { PurchaseOrderDetail } from './purchase-orders/entities/purchase-order-detail.entity';
 import { ShoppingCart } from './shopping-cart/entities/shopping-cart.entity';
 import { ShoppingCartDetail } from './shopping-cart/entities/shopping-cart-detail.entity';
+import { InvoicesModule } from './invoices/invoices.module';
+import { Invoice } from './invoices/entities/invoice.entity';
 
 @Module({
   imports: [
@@ -35,7 +37,7 @@ import { ShoppingCartDetail } from './shopping-cart/entities/shopping-cart-detai
         username: configService.get<string>('DB_USER'),
         password: configService.get<string>('DB_PASSWORD'),
         connectString: configService.get<string>('DB_CONNECT_STRING'),
-        entities: [User, Product, Category, Warehouse, Client, Supplier, PurchaseOrder, PurchaseOrderDetail, ShoppingCart, ShoppingCartDetail],
+        entities: [User, Product, Category, Warehouse, Client, Supplier, PurchaseOrder, PurchaseOrderDetail, ShoppingCart, ShoppingCartDetail, Invoice],
         autoLoadEntities: true,
         synchronize: false,
       }),
@@ -50,6 +52,7 @@ import { ShoppingCartDetail } from './shopping-cart/entities/shopping-cart-detai
     SuppliersModule,
     PurchaseOrdersModule,
     ShoppingCartModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

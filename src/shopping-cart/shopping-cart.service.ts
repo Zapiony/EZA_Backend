@@ -40,20 +40,17 @@ export class ShoppingCartService {
     }
 
     async getCartByUserId(cedula: string) {
-        // We assume 1 active cart per user.
         const cart = await this.dataSource.query(
-            `SELECT * FROM CARRITO_DE_COMPRA WHERE CLI_CEDULA_RUC = :0`,
+            `SELECT CAR_CODIGO FROM CARRITO_DE_COMPRA WHERE CLI_CEDULA_RUC = :0`,
             [cedula]
         );
 
         if (!cart || cart.length === 0) {
-            return null; // Or create one?
+            throw new NotFoundException(`No existe un carrito activo para el usuario ${cedula}`);
         }
 
         const carCodigo = cart[0].CAR_CODIGO;
 
-        // Get details
-        // Using LEFT JOIN to ensure we see items even if product relation is missing/broken
         const details = await this.dataSource.query(
             `SELECT d.PRD_CODIGO, d.DET_CAR_CANTIDAD, p.PRD_DESCRIPCION, p.PRD_PRECIO
              FROM DETALLE_CARRITO d
@@ -61,8 +58,6 @@ export class ShoppingCartService {
              WHERE d.CAR_CODIGO = :0`,
             [carCodigo]
         );
-
-        console.log(`[ShoppingCart] CartID: ${carCodigo}, Found ${details.length} items`, details);
 
         return {
             ...cart[0],
