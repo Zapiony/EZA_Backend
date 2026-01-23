@@ -109,7 +109,7 @@ export class AuthService {
         const user = await this.usersService.findByUsername(loginDto.username);
 
         if (!user) {
-            throw new UnauthorizedException('Credenciales inválidas (Usuario no encontrado)');
+            throw new UnauthorizedException('Usuario o clave incorrecto');
         }
 
         let isMatch = await bcrypt.compare(loginDto.password, user.password || '');
@@ -120,7 +120,7 @@ export class AuthService {
         }
 
         if (!isMatch) {
-            throw new UnauthorizedException('Credenciales inválidas (Contraseña incorrecta)');
+            throw new UnauthorizedException('Usuario o clave incorrecto');
         }
 
         // Payload uses username (USU_NOMBRE). Use 0 or name as sub if ID not present.
@@ -180,16 +180,16 @@ export class AuthService {
      * OBTENER PERFIL
      */
     async getProfile(userId: any) {
-        // Si userId es 'admin' o string generico, devolver info admin manual
         if (userId === 'admin' || typeof userId === 'string' && isNaN(Number(userId))) {
             return { role: UserRole.ADMIN, name: 'Administrator' };
         }
 
-        // Si es número, buscar en tabla usuarios
         const user = await this.usersService.findById(Number(userId));
         if (!user) return null;
 
         const { password, ...rest } = user;
-        return rest;
+        const client = await this.clientsService.findOne(user.cedula);
+
+        return { ...rest, client };
     }
 }

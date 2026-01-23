@@ -16,7 +16,7 @@ export class UsersService {
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Map DTO to Entity fields
     const newUser = this.userRepository.create({
-      cedula: createUserDto.username, // Assuming username holds cedula in DTO or update DTO
+      cedula: createUserDto.username,
       name: createUserDto.name,
       password: createUserDto.password,
       // Role is default CLIENT
@@ -27,12 +27,9 @@ export class UsersService {
   // Buscar usuario por USU_NOMBRE (Login)
   async findByUsername(username: string): Promise<User | undefined> {
     const user = await this.userRepository.findOne({
-      where: { name: username }, // name maps to USU_NOMBRE
-      // Select only name and password as requested (avoiding cedula/id if possible)
-      // Note: Primary Key (id) might still be selected by TypeORM implicitly.
-      select: ['name', 'password']
+      where: { name: username },
+      select: ['id', 'cedula', 'name', 'password']
     });
-    // Manually assign implicit role for the app logic
     if (user) {
       user.role = UserRole.CLIENT;
     }

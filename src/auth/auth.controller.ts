@@ -16,38 +16,47 @@ import { JwtAuthGuard } from './guards/jwt-auth.guard';
 export class AuthController {
   constructor(private readonly authService: AuthService) { }
 
-  /**
-   * POST /auth/register
-   * Registro de nuevo usuario
-   * Ruta PÚBLICA
-   */
   @Post('register')
   register(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
-  /**
-   * POST /auth/login
-   * Inicio de sesión
-   * Ruta PÚBLICA
-   */
   @Post('login')
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
-  /**
-   * GET /auth/profile
-   * Obtener perfil del usuario autenticado
-   * Ruta PROTEGIDA - requiere token válido
-   */
   @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
-    const user = await this.authService.getProfile(req.user.userId);
+    const user = await this.authService.getProfile(req.user.userId) as any;
+    if (!user) {
+      return { message: 'Usuario no encontrado' };
+    }
     return {
       message: 'Perfil obtenido exitosamente',
-      user: user,
+      user: {
+        ...user,
+        cedula: user.cedula,
+        userId: user.id,
+        correo: user.correo
+      },
+    };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('validation')
+  async validateSession(@Request() req) {
+    // Endpoint ligero para validar sesión y obtener ID crítico
+    const user = await this.authService.getProfile(req.user.userId) as any;
+    if (!user) {
+      return { valid: false };
+    }
+    return {
+      valid: true,
+      userId: user.id || req.user.userId,
+      cedula: user.cedula || user.CLI_CEDULA_RUC,
+      role: user.role
     };
   }
 
