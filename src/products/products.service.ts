@@ -8,7 +8,7 @@ import { UpdateProductDto } from './dto/update-product.dto';
 @Injectable()
 export class ProductsService {
     constructor(
-        @InjectRepository(Product)
+        @InjectRepository(Product, 'PUBLIC_DB')
         private readonly productRepository: Repository<Product>,
     ) { }
 
