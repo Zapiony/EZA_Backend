@@ -10,8 +10,8 @@ export enum UserRole {
 
 @Entity('USUARIO')
 export class User {
-    @PrimaryGeneratedColumn('identity', { name: 'USU_ID' })
-    id: number; // Changed to number as per USU_ID NUMBER(38)
+    @Column({ name: 'USU_ID', primary: true, generated: 'identity' })
+    id: string;
 
     @Column({ name: 'CLI_CEDULA_RUC', unique: true })
     cedula: string; // This acts as the username/identifier

@@ -8,7 +8,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(User)
+    @InjectRepository(User, 'PUBLIC_DB')
     private readonly userRepository: Repository<User>,
   ) { }
 
@@ -19,7 +19,6 @@ export class UsersService {
       cedula: createUserDto.username,
       name: createUserDto.name,
       password: createUserDto.password,
-      // Role is default CLIENT
     });
     return await this.userRepository.save(newUser);
   }
@@ -37,31 +36,27 @@ export class UsersService {
   }
 
   // Buscar usuario por ID
-  async findOne(id: number): Promise<User | undefined> {
+  async findOne(id: string): Promise<User | undefined> {
     const user = await this.userRepository.findOne({ where: { id } });
     if (user) user.role = UserRole.CLIENT;
     return user || undefined;
   }
 
-  async findById(id: number): Promise<User | undefined> {
+  async findById(id: string): Promise<User | undefined> {
     return this.findOne(id);
   }
 
   // Actualizar usuario
-  async update(id: number, updateUserDto: UpdateUserDto): Promise<User | undefined> {
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<User | undefined> {
     const user = await this.findOne(id);
     if (!user) return undefined;
-
-    // Mapping updates... currently DTO has old names
-    // This part might need more robust DTO mapping but for now:
     if (updateUserDto.name) user.name = updateUserDto.name;
-    // ...handle other fields
 
     return await this.userRepository.save(user);
   }
 
   // Eliminar usuario
-  async remove(id: number): Promise<boolean> {
+  async remove(id: string): Promise<boolean> {
     const result = await this.userRepository.delete(id);
     return (result.affected ?? 0) > 0;
   }
