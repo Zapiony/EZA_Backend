@@ -24,8 +24,6 @@ export class AuthService {
         private clientsService: ClientsService,
     ) { }
 
-    // ...
-
     async register(registerDto: RegisterDto) {
         // Correct logic:
         // identification -> CLI_CEDULA_RUC (Client PK, User FK)
@@ -100,56 +98,51 @@ export class AuthService {
      * 2. Admins (Oracle DB Users)
      */
     async login(loginDto: LoginDto) {
-        // --- ESTRATEGIA 1: ADMIN (DBA_USERS) ---
-        if (loginDto.isAdmin) {
-            return this.loginAsAdmin(loginDto);
-        }
-
-        // --- ESTRATEGIA 2: CLIENTE (TABLA USUARIO) ---
+        // 1. Intentar buscar en tabla USUARIO (Clientes)
         const user = await this.usersService.findByUsername(loginDto.username);
 
-        if (!user) {
-            throw new UnauthorizedException('Usuario o clave incorrecto');
-        }
+        if (user) {
+            // Existe como cliente, verificar contraseña
+            let isMatch = await bcrypt.compare(loginDto.password, user.password);
 
-        let isMatch = await bcrypt.compare(loginDto.password, user.password || '');
-
-        // Fallback: Check plain text if hash match failed (for manually inserted users)
-        if (!isMatch && loginDto.password === user.password) {
-            isMatch = true;
-        }
-
-        if (!isMatch) {
-            throw new UnauthorizedException('Usuario o clave incorrecto');
-        }
-
-        // Payload uses username (USU_NOMBRE). Use 0 or name as sub if ID not present.
-        const payload = { sub: user.id || 0, username: user.name, role: UserRole.CLIENT };
-
-        return {
-            access_token: this.jwtService.sign(payload),
-            user: {
-                // Return only minimal info as requested
-                name: user.name, // USU_NOMBRE
-                role: UserRole.CLIENT
+            // Fallback: Check plain text if hash match failed
+            if (!isMatch && loginDto.password === user.password) {
+                isMatch = true;
             }
-        };
+
+            if (isMatch) {
+                const payload = { sub: user.id, username: user.name, role: UserRole.CLIENT };
+                return {
+                    access_token: this.jwtService.sign(payload),
+                    user: {
+                        name: user.name,
+                        role: UserRole.CLIENT
+                    }
+                };
+            }
+            // Si el usuario existe pero la clave es incorrecta, devolvemos error (no intentamos admin)
+            throw new UnauthorizedException('Usuario o clave incorrecto');
+        }
+
+        try {
+            return await this.loginAsAdmin(loginDto);
+        } catch (error) {
+            // Si falla la conexión como admin, entonces credenciales inválidas
+            throw new UnauthorizedException('Usuario o clave incorrecto');
+        }
     }
 
     private async loginAsAdmin(loginDto: LoginDto) {
         let connection;
         try {
-            // Intentar conectar a Oracle directamente con las credenciales
             connection = await oracledb.getConnection({
-                user: loginDto.username, // El usuario DB (ej: SYSTEM)
+                user: loginDto.username,
                 password: loginDto.password,
                 connectString: this.configService.get('DB_CONNECT_STRING')
             });
 
-            // Si conecta, es válido.
-            // Generamos token de ADMIN
             const payload = {
-                sub: 'admin', // No tenemos ID numérico fijo
+                sub: 'admin',
                 username: loginDto.username,
                 role: UserRole.ADMIN
             };
@@ -164,7 +157,7 @@ export class AuthService {
 
         } catch (err) {
             console.error('Admin Login Error:', err);
-            throw new UnauthorizedException('Credenciales de Administrador inválidas');
+            throw new UnauthorizedException('Usuario o clave incorrecto');
         } finally {
             if (connection) {
                 try {
@@ -180,16 +173,21 @@ export class AuthService {
      * OBTENER PERFIL
      */
     async getProfile(userId: any) {
-        if (userId === 'admin' || typeof userId === 'string' && isNaN(Number(userId))) {
+        // Si el userId es 'admin' o no es un número válido (ej. token antiguo o inválido),
+        // asumimos que es un admin o retornamos el perfil de admin para evitar crash por NaN en Oracle.
+        if (userId === 'admin') {
             return { role: UserRole.ADMIN, name: 'Administrator' };
         }
 
-        const user = await this.usersService.findById(Number(userId));
+        const user = await this.usersService.findById(userId);
         if (!user) return null;
 
         const { password, ...rest } = user;
         const client = await this.clientsService.findOne(user.cedula);
 
-        return { ...rest, client };
+        return {
+            ...rest,
+            email: client?.CLI_CORREO
+        };
     }
 }
