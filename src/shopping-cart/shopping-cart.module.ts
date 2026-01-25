@@ -8,7 +8,7 @@ import { AuthModule } from '../auth/auth.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([ShoppingCart, ShoppingCartDetail]),
+        TypeOrmModule.forFeature([ShoppingCart, ShoppingCartDetail], 'PUBLIC_DB'),
         forwardRef(() => AuthModule) // Use forwardRef if circular dependency issues arise, or just normal import
     ],
     controllers: [ShoppingCartController],

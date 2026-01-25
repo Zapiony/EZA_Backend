@@ -3,9 +3,11 @@ import { DataSource } from 'typeorm';
 import { ShoppingCart } from './entities/shopping-cart.entity';
 import { ShoppingCartDetail } from './entities/shopping-cart-detail.entity';
 
+import { InjectDataSource } from '@nestjs/typeorm';
+
 @Injectable()
 export class ShoppingCartService {
-    constructor(private readonly dataSource: DataSource) { }
+    constructor(@InjectDataSource('PUBLIC_DB') private readonly dataSource: DataSource) { }
 
     // Creates a new cart for a user (called on registration)
     async createCartForUser(cedula: string) {
