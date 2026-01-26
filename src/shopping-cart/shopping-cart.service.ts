@@ -7,7 +7,10 @@ import { InjectDataSource } from '@nestjs/typeorm';
 
 @Injectable()
 export class ShoppingCartService {
-    constructor(@InjectDataSource('PUBLIC_DB') private readonly dataSource: DataSource) { }
+    constructor(
+        @InjectDataSource('PUBLIC_DB') private readonly dataSource: DataSource,
+        @InjectDataSource() private readonly privateDataSource: DataSource,
+    ) { }
 
     // Creates a new cart for a user (called on registration)
     async createCartForUser(cedula: string) {
@@ -127,7 +130,7 @@ export class ShoppingCartService {
 
         const carCodigo = cart.CAR_CODIGO;
 
-        const queryRunner = this.dataSource.createQueryRunner();
+        const queryRunner = this.privateDataSource.createQueryRunner();
         await queryRunner.connect();
 
         try {

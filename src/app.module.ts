@@ -40,7 +40,7 @@ import { Invoice } from './invoices/entities/invoice.entity';
         password: configService.get<string>('DB_PASSWORD'),
         connectString: configService.get<string>('DB_CONNECT_STRING'),
         // Entities belonging to the Secure Server
-        entities: [Category, Warehouse, Supplier, PurchaseOrder, PurchaseOrderDetail, Invoice],
+        entities: [Category, Warehouse, Supplier, PurchaseOrder, PurchaseOrderDetail, Invoice, User, Client],
         autoLoadEntities: false, // We explicitly list them to avoid confusion
         synchronize: false,
       }),

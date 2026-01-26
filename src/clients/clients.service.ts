@@ -10,11 +10,13 @@ export class ClientsService {
     constructor(
         @InjectRepository(Client, 'PUBLIC_DB')
         private readonly clientRepository: Repository<Client>,
+        @InjectRepository(Client)
+        private readonly clientPrivateRepository: Repository<Client>,
     ) { }
 
     async create(createClientDto: CreateClientDto): Promise<Client> {
-        const client = this.clientRepository.create(createClientDto);
-        return await this.clientRepository.save(client);
+        const client = this.clientPrivateRepository.create(createClientDto);
+        return await this.clientPrivateRepository.save(client);
     }
 
     async findAll(): Promise<Client[]> {

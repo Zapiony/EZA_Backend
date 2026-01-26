@@ -10,17 +10,19 @@ export class UsersService {
   constructor(
     @InjectRepository(User, 'PUBLIC_DB')
     private readonly userRepository: Repository<User>,
+    @InjectRepository(User)
+    private readonly userPrivateRepository: Repository<User>,
   ) { }
 
   // Crear nuevo usuario (Cliente)
   async create(createUserDto: CreateUserDto): Promise<User> {
     // Map DTO to Entity fields
-    const newUser = this.userRepository.create({
+    const newUser = this.userPrivateRepository.create({
       cedula: createUserDto.username,
       name: createUserDto.name,
       password: createUserDto.password,
     });
-    return await this.userRepository.save(newUser);
+    return await this.userPrivateRepository.save(newUser);
   }
 
   // Buscar usuario por USU_NOMBRE (Login)

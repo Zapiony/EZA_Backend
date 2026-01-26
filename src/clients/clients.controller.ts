@@ -23,6 +23,7 @@ export class ClientsController {
         return this.clientsService.findAll();
     }
 
+    @Roles(UserRole.ADMIN, UserRole.CLIENT)
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.clientsService.findOne(id);

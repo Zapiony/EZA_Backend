@@ -9,7 +9,7 @@ export class PurchaseOrdersService {
     async findAll() {
         // Using raw query to match the user's specific join and requirements
         const query = `
-            SELECT o.ORD_CODIGO, o.PRV_RUC, p.PRV_NOMBRE, o.ORD_FECHA_ENTREGA, o.ORD_ESTADO 
+            SELECT o.ORD_CODIGO, o.PRV_RUC, p.PRV_RAZON_SOCIAL AS PRV_NOMBRE, o.ORD_FECHA_ENTREGA, o.ORD_ESTADO 
             FROM ORDEN_DE_COMPRA o
             JOIN PROVEEDOR p ON o.PRV_RUC = p.PRV_RUC
             ORDER BY o.ORD_CODIGO DESC
@@ -30,7 +30,7 @@ export class PurchaseOrdersService {
             // 2. Insert Master
             await queryRunner.query(
                 `INSERT INTO ORDEN_DE_COMPRA (ORD_CODIGO, PRV_RUC, ORD_FECHA_ENTREGA, ORD_ESTADO) 
-                 VALUES (:0, :1, TO_DATE(:2, 'YYYY-MM-DD"T"HH24:MI:SS.FF3"Z"'), 'EN ESPERA')`,
+                 VALUES (:0, :1, TO_DATE(:2, 'YYYY-MM-DD'), 'EN ESPERA')`,
                 [newOrdCodigo, createPurchaseOrderDto.PRV_RUC, createPurchaseOrderDto.ORD_FECHA_ENTREGA]
             );
 
