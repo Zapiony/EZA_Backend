@@ -27,16 +27,21 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard)
   @Get('profile')
   async getProfile(@Request() req) {
     const user = await this.authService.getProfile(req.user.userId) as any;
     if (!user) {
       return { message: 'Usuario no encontrado' };
     }
+    // Si el perfil devuelve un rol genérico (como admin), preferimos el del token
+    const effectiveRole = req.user.role || user.role;
+
     return {
       message: 'Perfil obtenido exitosamente',
       user: {
         ...user,
+        role: effectiveRole,
         cedula: user.cedula,
         userId: user.id,
         correo: user.correo
@@ -56,7 +61,7 @@ export class AuthController {
       valid: true,
       userId: user.id || req.user.userId,
       cedula: user.cedula || user.CLI_CEDULA_RUC,
-      role: user.role
+      role: req.user.role || user.role
     };
   }
 

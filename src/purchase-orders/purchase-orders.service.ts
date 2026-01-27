@@ -62,17 +62,12 @@ export class PurchaseOrdersService {
         await queryRunner.connect();
 
         try {
-            // Using query directly instead of procedure call might be safer depending on driver support, 
-            // but queryRunner.query with BEGIN...END block works for PL/SQL
-            await queryRunner.query(`
-                BEGIN
-                    PR_RECEPCION_MERCADERIA(:0);
-                END;
-            `, [ordCodigo]);
+            // Actualizamos el estado a ENTREGADO para disparar el trigger TRG_ENTREGA_ORDEN_COMPRA
+            await queryRunner.query('UPDATE ORDEN_DE_COMPRA SET ORD_ESTADO = \'ENTREGADO\' WHERE ORD_CODIGO = :0', [ordCodigo]);
 
             return { success: true, message: 'Mercadería recibida correctamente' };
         } catch (err) {
-            console.error('[PurchaseOrdersService] Error executing PR_RECEPCION_MERCADERIA:', err);
+            console.error('[PurchaseOrdersService] Error updating purchase order status:', err);
             throw new InternalServerErrorException(err.message || 'Error receiving merchandise');
         } finally {
             await queryRunner.release();

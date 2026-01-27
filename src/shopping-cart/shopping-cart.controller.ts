@@ -7,7 +7,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.CLIENT)
+@Roles(UserRole.CLIENT, UserRole.VENTAS, UserRole.ADMIN)
 @Controller('cart')
 export class ShoppingCartController {
     constructor(private readonly cartService: ShoppingCartService) { }

@@ -6,6 +6,10 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 export enum UserRole {
     CLIENT = 'client',
     ADMIN = 'admin',
+    BODEGUERO = 'ROL_BODEGUERO',
+    VENTAS = 'ROL_VENTAS',
+    MARKETING = 'ROL_MARKETING',
+    COMPRAS = 'ROL_COMPRAS',
 }
 
 @Entity('USUARIO')
