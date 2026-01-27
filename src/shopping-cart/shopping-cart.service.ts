@@ -71,12 +71,19 @@ export class ShoppingCartService {
     }
 
     async addItem(cedula: string, productCode: string, quantity: number) {
-        const cart = await this.getCartByUserId(cedula);
-        if (!cart) {
-            throw new NotFoundException('No shopping cart found for this user');
-        }
+        let carCodigo: number;
 
-        const carCodigo = cart.CAR_CODIGO;
+        try {
+            const cart = await this.getCartByUserId(cedula);
+            carCodigo = cart.CAR_CODIGO;
+        } catch (error) {
+            if (error instanceof NotFoundException) {
+                // Si no existe el carrito, lo creamos automáticamente
+                carCodigo = await this.createCartForUser(cedula);
+            } else {
+                throw error;
+            }
+        }
 
         // Check if item exists to update or insert
         const existingItem = await this.dataSource.query(
@@ -140,7 +147,16 @@ export class ShoppingCartService {
                  END;`,
                 [carCodigo, cedulaFactura, formaPago]
             );
-            return { success: true, message: 'Factura generada y carrito procesado' };
+
+            // Fetch the generated Invoice ID (Assuming it's the latest one for this client)
+            const result = await queryRunner.query(
+                `SELECT MAX(FAC_CODIGO) as LAST_ID FROM FACTURA WHERE CLI_CEDULA_RUC = :0`,
+                [cedulaFactura]
+            );
+
+            const invoiceId = result[0]?.LAST_ID;
+
+            return { success: true, message: 'Factura generada y carrito procesado', invoiceId };
         } catch (err) {
             console.error('[ShoppingCart] Error executing PA_REGISTRAR_FACTURA:', err);
             throw new InternalServerErrorException(err.message || 'Error processing checkout');
