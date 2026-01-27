@@ -7,7 +7,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.COMPRAS)
 @Controller('purchase-orders')
 export class PurchaseOrdersController {
     constructor(private readonly purchaseOrdersService: PurchaseOrdersService) { }
