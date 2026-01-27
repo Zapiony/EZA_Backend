@@ -11,7 +11,6 @@ import { LoginDto } from './dto/login.dto';
 import { UserRole } from '../users/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import * as oracledb from 'oracledb';
-import { ShoppingCartService } from '../shopping-cart/shopping-cart.service';
 import { ClientsService } from '../clients/clients.service';
 
 @Injectable()
@@ -20,16 +19,10 @@ export class AuthService {
         private usersService: UsersService,
         private jwtService: JwtService,
         private configService: ConfigService,
-        private shoppingCartService: ShoppingCartService,
         private clientsService: ClientsService,
     ) { }
 
     async register(registerDto: RegisterDto) {
-        // Correct logic:
-        // identification -> CLI_CEDULA_RUC (Client PK, User FK)
-        // username -> USU_NOMBRE (User Display Name / Account Name)
-        // name -> CLI_NOMBRE (Client Real Name)
-
         const { password, identification, username, name, email, telephone } = registerDto;
 
         // Validar si el usuario ya existe (por nombre de usuario de login)
@@ -37,11 +30,6 @@ export class AuthService {
         if (existingUser) {
             throw new ConflictException('Username already taken');
         }
-
-        // También validar si ya existe un usuario con esa cédula
-        // (Esto dependerá de si UsersService tiene un método para esto, por ahora findByUsername busca por USU_NOMBRE)
-        // Pero intentaremos insertar y si falla la constraint unique saltará.
-        // Opcional: Buscar user por cedula si `usersService` lo soporta.
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -62,30 +50,14 @@ export class AuthService {
         }
 
         // 2. Create User
-        // Note: UsersService.create currently takes "username" and maps it to "cedula".
-        // We need to fix UsersService.create logic too, or conform to it.
-        // Assuming UsersService.create(dto) maps: dto.username -> entity.cedula, dto.name -> entity.name
-        // So we pass:
-        // username: identification (so it maps to cedula)
-        // name: username (so it maps to USU_NOMBRE)
-
         const newUser = await this.usersService.create({
-            username: identification, // Turns into CLI_CEDULA_RUC in UsersService
-            name: username,          // Turns into USU_NOMBRE in UsersService
+            username: identification,
+            name: username,
             password: hashedPassword,
-            email: email, // Not used in Entity but passed to create DTO
+            email: email,
             role: UserRole.CLIENT,
             isActive: true,
         });
-
-        // Create Shopping Cart using identification (which is the user ID/Cedula)
-        if (newUser.cedula) {
-            try {
-                await this.shoppingCartService.createCartForUser(newUser.cedula);
-            } catch (error) {
-                console.error('Error creating cart for user:', error);
-            }
-        }
 
         const { password: _, ...result } = newUser;
         return result;
@@ -141,17 +113,35 @@ export class AuthService {
                 connectString: this.configService.get('DB_CONNECT_STRING')
             });
 
+            // 3. Query User Role
+            let role = UserRole.ADMIN; // Default fallback
+            try {
+                // Check SESSION_ROLES since we are connected as that user
+                const result = await connection.execute(
+                    `SELECT ROLE FROM SESSION_ROLES 
+                     WHERE ROLE IN ('ROL_BODEGUERO', 'ROL_VENTAS', 'ROL_MARKETING', 'ROL_COMPRAS')`
+                );
+
+                if (result.rows && result.rows.length > 0) {
+                    // Extract the first matching role found
+                    const dbRole = result.rows[0][0]; // result.rows is array of arrays [[VAL]]
+                    role = dbRole as any; // Cast or map if you have specific enum values
+                }
+            } catch (roleErr) {
+                console.warn('Could not determine specific role, defaulting to ADMIN', roleErr);
+            }
+
             const payload = {
-                sub: 'admin',
+                sub: 'admin', // Or use loginDto.username as ID
                 username: loginDto.username,
-                role: UserRole.ADMIN
+                role: role
             };
 
             return {
                 access_token: this.jwtService.sign(payload),
                 user: {
                     name: loginDto.username,
-                    role: UserRole.ADMIN
+                    role: role
                 }
             };
 
