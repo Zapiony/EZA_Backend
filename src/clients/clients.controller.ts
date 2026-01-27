@@ -8,7 +8,7 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { UserRole } from '../users/entities/user.entity';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
-@Roles(UserRole.ADMIN)
+@Roles(UserRole.ADMIN, UserRole.VENTAS)
 @Controller('clients')
 export class ClientsController {
     constructor(private readonly clientsService: ClientsService) { }
@@ -18,12 +18,13 @@ export class ClientsController {
         return this.clientsService.create(createClientDto);
     }
 
+    @Roles(UserRole.ADMIN, UserRole.VENTAS, UserRole.MARKETING)
     @Get()
     findAll() {
         return this.clientsService.findAll();
     }
 
-    @Roles(UserRole.ADMIN, UserRole.CLIENT)
+    @Roles(UserRole.ADMIN, UserRole.CLIENT, UserRole.VENTAS, UserRole.MARKETING)
     @Get(':id')
     findOne(@Param('id') id: string) {
         return this.clientsService.findOne(id);
@@ -41,9 +42,6 @@ export class ClientsController {
 
     @Get('profile')
     async getProfile(@Request() req) {
-        return {
-            message: 'Perfil obtenido exitosamente',
-            user: req.user,
-        };
+        return req.user;
     }
 }
